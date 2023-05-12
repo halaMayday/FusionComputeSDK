@@ -8,8 +8,12 @@ import (
 )
 
 const (
-	siteMask   = "<site_uri>"
-	clusterUrl = "<site_uri>/clusters"
+	siteMask      = "<site_uri>"
+	clusterMask   = "<cluster_uri>"
+	clusterIdMask = "<cluster_id>"
+
+	clusterUrl      = "<site_uri>/clusters"
+	allVmcSourceUrl = "<cluster_uri>/<cluster_id>/drsrecommendations"
 )
 
 type Manager interface {

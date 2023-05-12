@@ -6,6 +6,7 @@ import (
 	"github.com/KubeOperator/FusionComputeGolangSDK/pkg/site"
 	"github.com/KubeOperator/FusionComputeGolangSDK/pkg/task"
 	"log"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -106,10 +107,91 @@ func TestManager_CloneVm(t *testing.T) {
 		time.Sleep(5 * time.Second)
 	}
 
-	err = m.DeleteVm(ts.Uri)
+	resp, err := m.DeleteVm(ts.Uri)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("delete vm %s", ts.Uri)
+	fmt.Printf("delete vm %s  response: %v", ts.Uri, resp)
 
+}
+
+func Test_manager_StartVm(t *testing.T) {
+	type fields struct {
+		client  client.FusionComputeClient
+		siteUri string
+	}
+	type args struct {
+		vmUri string
+	}
+	c := client.NewFusionComputeClient("https://192.168.17.131:7443", "mlc", "1qaz@WSX")
+	err := c.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer c.DisConnect()
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *StartVmResponse
+		wantErr bool
+	}{
+		{name: "start", fields: fields{client: c, siteUri: ""}, args: args{"/service/sites/47520799/vms/i-00000061"}, wantErr: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &manager{
+				client:  tt.fields.client,
+				siteUri: tt.fields.siteUri,
+			}
+			got, err := m.StartVm(tt.args.vmUri)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("StartVm() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("StartVm() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_manager_StopVm(t *testing.T) {
+	type fields struct {
+		client  client.FusionComputeClient
+		siteUri string
+	}
+	type args struct {
+		vmUri string
+	}
+	c := client.NewFusionComputeClient("https://192.168.17.131:7443", "mlc", "1qaz@WSX")
+	err := c.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *StopVmResponse
+		wantErr bool
+	}{
+		{name: "stop-test", fields: fields{client: c, siteUri: ""}, args: args{"/service/sites/47520799/vms/i-00000061"}, wantErr: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &manager{
+				client:  tt.fields.client,
+				siteUri: tt.fields.siteUri,
+			}
+			got, err := m.StopVm(tt.args.vmUri)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("StopVm() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("StopVm() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

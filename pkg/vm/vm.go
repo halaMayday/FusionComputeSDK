@@ -13,8 +13,11 @@ import (
 )
 
 const (
-	siteMask = "<site_uri>"
-	vmUrl    = "<site_uri>/vms"
+	siteMask   = "<site_uri>"
+	vmUrl      = "<site_uri>/vms"
+	vmMask     = "<vm_uri>"
+	vmStartUrl = "<vm_uri>/action/start"
+	vmStopUrl  = "<vm_uri>/action/stop"
 )
 
 type Manager interface {
@@ -23,6 +26,11 @@ type Manager interface {
 	CloneVm(templateUri string, request CloneVmRequest) (*CloneVmResponse, error)
 	DeleteVm(vmUri string) (*DeleteVmResponse, error)
 	UploadImage(vmUri string, request ImportTemplateRequest) (*ImportTemplateResponse, error)
+	StartVm(vmUri string) (*StartVmResponse, error)
+	StopVm(vmUri string) (*StopVmResponse, error)
+	AddNic(nicUri string) (*AddNicResponse, error)
+	DeleteNic() (*DeleteNicResponse, error)
+	AddSecurityGroup() (*AddSecurityGroupResponse, error)
 }
 
 func NewManager(client client.FusionComputeClient, siteUri string) Manager {
@@ -187,4 +195,46 @@ func parseMask(num int) (mask string, err error) {
 	d, _ := strconv.ParseUint(masker[24:32], 2, 64)
 	resultMask := fmt.Sprintf("%v.%v.%v.%v", a, b, c, d)
 	return resultMask, nil
+}
+
+func (m *manager) StartVm(vmUri string) (*StartVmResponse, error) {
+	var startVmResponse StartVmResponse
+	api, err := m.client.GetApiClient()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.R().Post(strings.Replace(vmStartUrl, vmMask, vmUri, -1))
+	if err != nil {
+		return nil, err
+	}
+	if resp.IsSuccess() {
+		err := json.Unmarshal(resp.Body(), &startVmResponse)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, common.FormatHttpError(resp)
+	}
+	return &startVmResponse, nil
+}
+
+func (m *manager) StopVm(vmUri string) (*StopVmResponse, error) {
+	var stopVmResponse StopVmResponse
+	api, err := m.client.GetApiClient()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.R().Post(strings.Replace(vmStopUrl, vmMask, vmUri, -1))
+	if err != nil {
+		return nil, err
+	}
+	if resp.IsSuccess() {
+		err := json.Unmarshal(resp.Body(), &stopVmResponse)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, common.FormatHttpError(resp)
+	}
+	return &stopVmResponse, nil
 }
